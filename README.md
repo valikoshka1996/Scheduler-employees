@@ -16,4 +16,4 @@ This Python script generates a shift schedule for employees, considering both we
 ## Usage
 1. Run the script:
    ```sh
-   python sched.py
+   python scedule.py
