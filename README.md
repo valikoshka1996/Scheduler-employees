@@ -10,7 +10,7 @@ This script generates a user schedule based on the following logic:
 ## How it Works?
 
 You can run the script with the following command:
-python import\ calendar\ v0.0.19.py
+`python import\ calendar\ v0.0.19.py`
 
 However, you must have the following libraries installed:
 
