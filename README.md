@@ -30,12 +30,14 @@ Alternatively, you can navigate to the `build/dist` folder and run the compiled 
 - The schedule will be saved in the `build/dist` folder.
 
 ## Main Window of the Program:
+![{4B173C25-F2F5-4C3B-B006-0ACE87709CF8}](https://github.com/user-attachments/assets/59d3a7fc-bd00-49b4-947b-de6714e483fb)
 
 
 
 ## Example Generation - Input Data:
 
-_(Screenshot of the window)_
+![{8B4ED9B8-0B1D-44C5-851D-27D2A24E3A63}](https://github.com/user-attachments/assets/9276dfed-b485-4738-ae7c-3807c56472b8)
+
 
 ## Result:
 
