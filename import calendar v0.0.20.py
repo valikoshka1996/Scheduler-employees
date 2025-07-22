@@ -9,7 +9,7 @@ from tkinter import messagebox, ttk
 
 # -------------------- Основна логіка --------------------
 DEFAULT_WEEKDAY = ["Вова", "Руслан", "Валік", "Діма", "Олексій", "Юра"]
-DEFAULT_WEEKEND = ["Данило", "Влад", "Маша"]
+DEFAULT_WEEKEND = ["Влад", "Маша"]
 WEEKDAYS = ["Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота", "Неділя"]
 
 def generate_color():
@@ -34,7 +34,11 @@ def move_nth_to_first(lst, n):
         # Якщо елементів менше 3, нічого не змінюємо
         return lst
 
-def generate_schedule(month, year, additional_weekends, weekend_workers, weekday_workers):
+
+
+
+# 3 days
+def generate_schedule_3(month, year, additional_weekends, weekend_workers, weekday_workers):
     """Генерує графік змін."""
     schedule = {}
     num_days = calendar.monthrange(year, month)[1]
@@ -106,7 +110,7 @@ def generate_schedule(month, year, additional_weekends, weekend_workers, weekday
     
     return schedule
 
-def save_to_excel(schedule, month, year):
+def save_to_excel_3(schedule, month, year):
     wb = openpyxl.Workbook()
     ws = wb.active
     header = ["Дата"] + [f"{day:02}.{month:02}.{year}" for day in sorted(schedule.keys())]
@@ -119,6 +123,96 @@ def save_to_excel(schedule, month, year):
     shift_names = ["Перша зміна", "Друга зміна", "Третя зміна"]
     for shift in shift_names:
         for _ in range(4):
+            ws.append([shift] + [schedule[day][shift] for day in sorted(schedule.keys())])
+    
+    for row in ws.iter_rows(min_row=3, min_col=2):
+        for cell in row:
+            if cell.value in COLORS:
+                cell.fill = PatternFill(start_color=COLORS[cell.value], fill_type="solid")
+    
+    filename = f"Графік_{month:02}_{year}.xlsx"
+    wb.save(filename)
+    return filename
+
+# 2 days
+def generate_schedule(month, year, additional_weekends, weekend_workers, weekday_workers):
+    """Генерує графік змін."""
+    schedule = {}
+    num_days = calendar.monthrange(year, month)[1]
+
+    index_week = 3
+    index_weeknd = 3
+    workers_by_day_type = {"будній": weekday_workers.copy(), "вихідний": weekend_workers.copy()}
+    weekday_queue = workers_by_day_type["будній"].copy()
+    weekend_queue = workers_by_day_type["вихідний"].copy()
+    
+    for day in range(1, num_days + 1):
+        current_date = datetime(year, month, day)
+        is_weekend = current_date.weekday() >= 5 or day in additional_weekends
+        day_type = "вихідний" if is_weekend else "будній"
+        workers_queue = weekend_queue if is_weekend else weekday_queue
+
+        # --- Тільки 2 зміни:
+        if len(workers_queue) >= 2:
+            schedule[day] = {
+                "Перша зміна": workers_queue[0], 
+                "Друга зміна": workers_queue[1],
+            }
+        elif len(workers_queue) == 1:
+            schedule[day] = {
+                "Перша зміна": workers_queue[0], 
+                "Друга зміна": workers_queue[0],
+            }
+        else:
+            schedule[day] = {
+                "Перша зміна": "Немає", 
+                "Друга зміна": "Немає",
+            }
+
+        # --- Ротація
+        if is_weekend:
+            if len(weekend_workers) == 2:
+                index_weeknd = 1
+            elif len(weekend_workers) == 1:
+                index_weekend = 0
+            index = index_weeknd
+            weekend_queue = move_nth_to_first(workers_queue, index)
+            if index_weeknd == len(weekend_workers) - 1:
+                index_weeknd = len(weekend_workers) - 1
+            elif len(weekend_workers) == 1:
+                index_weeknd = 0
+            else:
+                index_weeknd += 1
+        else:
+            if len(weekday_workers) == 2:
+                index_week = 1
+            elif len(weekday_workers) == 1:
+                index_week = 0
+            index = index_week
+            weekday_queue = move_nth_to_first(workers_queue, index)
+            if index_week == len(weekday_workers) - 1:
+                index_week = len(weekday_workers) - 1
+            elif len(weekday_workers) == 1:
+                index_week = 0
+            else:
+                index_week += 1
+
+    return schedule
+
+
+def save_to_excel(schedule, month, year):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    header = ["Дата"] + [f"{day:02}.{month:02}.{year}" for day in sorted(schedule.keys())]
+    ws.append(header)
+    ws.append(["День тижня"] + [WEEKDAYS[datetime(year, month, day).weekday()] for day in sorted(schedule.keys())])
+    
+    all_workers = {worker for day in schedule.values() for worker in day.values() if worker != "Немає"}
+    COLORS = {worker: generate_color() for worker in all_workers}
+    
+    shift_names = ["Перша зміна", "Друга зміна"]
+    for shift in shift_names:
+        for _ in range(6):
             ws.append([shift] + [schedule[day][shift] for day in sorted(schedule.keys())])
     
     for row in ws.iter_rows(min_row=3, min_col=2):
@@ -151,30 +245,45 @@ def generate_schedule_from_gui():
     try:
         year = int(combobox_year.get().strip())
         month = int(combobox_month.get().strip())
+        shift_count = int(shift_count_var.get())
     except ValueError:
-        messagebox.showerror("Помилка", "Виберіть коректний рік та місяць")
+        messagebox.showerror("Помилка", "Виберіть коректний рік, місяць або кількість змін")
         return
+
     additional_weekends = []
     if enable_additional_var.get():
         for day, var in additional_days_vars.items():
             if var.get() == 1:
                 additional_weekends.append(day)
+
     weekend_workers = text_weekend.get("1.0", tk.END).strip().splitlines()
     weekday_workers = text_weekday.get("1.0", tk.END).strip().splitlines()
     weekday_start = combobox_weekday_start.get().strip()
     weekend_start = combobox_weekend_start.get().strip()
+
     if weekday_start in weekday_workers:
         idx = weekday_workers.index(weekday_start)
         weekday_workers = weekday_workers[idx:] + weekday_workers[:idx]
+
     if weekend_start in weekend_workers:
         idx = weekend_workers.index(weekend_start)
         weekend_workers = weekend_workers[idx:] + weekend_workers[:idx]
-    schedule = generate_schedule(month, year, additional_weekends, weekend_workers, weekday_workers)
+
     try:
-        filename = save_to_excel(schedule, month, year)
+        if shift_count == 2:
+            schedule = generate_schedule(month, year, additional_weekends, weekend_workers, weekday_workers)
+            filename = save_to_excel(schedule, month, year)
+        elif shift_count == 3:
+            schedule = generate_schedule_3(month, year, additional_weekends, weekend_workers, weekday_workers)
+            filename = save_to_excel_3(schedule, month, year)
+        else:
+            messagebox.showerror("Помилка", "Непідтримувана кількість змін")
+            return
+
         messagebox.showinfo("Успіх", f"Графік збережено у {filename}")
     except Exception as e:
         messagebox.showerror("Помилка", f"Не вдалося зберегти графік: {e}")
+
 
 def update_additional_days_grid(*args):
     for widget in frame_additional_days.winfo_children():
@@ -233,13 +342,22 @@ if __name__ == '__main__':
     combobox_month = ttk.Combobox(frame_top, values=[str(m) for m in range(1, 13)], state="readonly", width=3)
     combobox_month.grid(row=0, column=3, padx=2, pady=2)
     combobox_month.current(0)
+    # Змінна для кількості змін
+    shift_count_var = tk.StringVar(value="2")
+    
+    # Випадаюче меню "Кількість змін"   
+    ttk.Label(frame_top, text="Кількість змін:").grid(row=0, column=4, padx=2, pady=2, sticky="w")
+    combobox_shift_count = ttk.Combobox(frame_top, textvariable=shift_count_var, values=["2", "3"], state="readonly", width=3)
+    combobox_shift_count.grid(row=0, column=5, padx=2, pady=2)
+    combobox_shift_count.current(0)
     enable_additional_var = tk.IntVar(value=0)
     chk_enable_additional = ttk.Checkbutton(frame_top, text="Додаткові вихідні?", variable=enable_additional_var,
                                             command=on_enable_additional_toggle)
-    chk_enable_additional.grid(row=0, column=4, padx=2, pady=2)
+    chk_enable_additional.grid(row=0, column=6, padx=2, pady=2)
     btn_generate = ttk.Button(frame_top, text="Генерувати графік", command=generate_schedule_from_gui)
-    btn_generate.grid(row=0, column=5, padx=10, pady=2, sticky="e")
+    btn_generate.grid(row=0, column=7, padx=10, pady=2, sticky="e")
     
+
     # Рядок 1: Календарна сітка для додаткових вихідних (за замовчуванням схована)
     frame_additional_days = ttk.Frame(root)
     frame_additional_days.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
@@ -247,6 +365,7 @@ if __name__ == '__main__':
     combobox_year.bind("<<ComboboxSelected>>", update_additional_days_grid)
     combobox_month.bind("<<ComboboxSelected>>", update_additional_days_grid)
     
+
     # Рядок 2: Область для введення списків співробітників
     frame_workers = ttk.Frame(root)
     frame_workers.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
