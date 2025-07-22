@@ -2,7 +2,7 @@
 
 This script generates a user schedule based on the following logic:
 
-- Each day has 3 shifts.
+- Each day has 2 or 3 shifts.
 - Every worker rotates through 3 shifts for 3 consecutive days (Shift 1 - Shift 2 - Shift 3).
 - Separate schedules for weekend and weekday shifts.
 - You can add custom weekends (in case of holidays).
@@ -31,13 +31,13 @@ Alternatively, you can navigate to the `build/dist` folder and run the compiled 
 
 ## Main Window of the Program:
 
-![{041EDF9B-6562-4559-B0DD-1A6E71870E18}](https://github.com/user-attachments/assets/795c1bb3-adb5-4c27-9b7e-7c80ada21b12)
+<img width="576" height="335" alt="image" src="https://github.com/user-attachments/assets/288fda3d-7320-4f93-9a80-6bf6f148cca1" />
 
 
 ## Example Generation - Input Data:
 
-![{22C4F8AA-8B5D-4C5E-85EA-250D2DDF8F28}](https://github.com/user-attachments/assets/e9f3ae26-5443-4dd8-a92c-e3eaff76576c)
+<img width="573" height="337" alt="image" src="https://github.com/user-attachments/assets/cc13cdd7-cdf1-4e9a-991a-0acfcdb48c74" />
 
 ## Result:
 
-![{18A62CD1-9DA9-456D-8D51-DCA9E18DBC7D}](https://github.com/user-attachments/assets/4bc9a0f1-fa80-4ee6-bd3c-ed6593558163)
+<img width="1590" height="277" alt="image" src="https://github.com/user-attachments/assets/009e216f-0549-4f84-a487-29ec92d3ebae" />
